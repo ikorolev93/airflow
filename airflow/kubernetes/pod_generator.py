@@ -351,6 +351,10 @@ class PodGenerator:
         except Exception:
             image = kube_image
 
+        # only use image from base if it's not configured anywhere else
+        if image == ':':
+            image = base_worker_pod.spec.containers[0].image
+
         dynamic_pod = k8s.V1Pod(
             metadata=k8s.V1ObjectMeta(
                 namespace=namespace,

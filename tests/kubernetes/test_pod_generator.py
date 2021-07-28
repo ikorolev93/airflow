@@ -477,6 +477,26 @@ class TestPodGenerator(unittest.TestCase):
         worker_config_result = self.k8s_client.sanitize_for_serialization(worker_config)
         assert worker_config_result == sanitized_result
 
+    def test_construct_pod_fallback_to_base_image(self):
+        path = sys.path[0] + '/tests/kubernetes/pod_generator_base_with_secrets.yaml'
+        worker_config = PodGenerator.deserialize_model_file(path)
+        executor_config = None
+
+        result = PodGenerator.construct_pod(
+            dag_id='dag_id',
+            task_id='task_id',
+            pod_id='pod_id',
+            kube_image=':',
+            try_number=3,
+            date=self.execution_date,
+            args=['command'],
+            pod_override_object=executor_config,
+            base_worker_pod=worker_config,
+            namespace='namespace',
+            scheduler_job_id='uuid',
+        )
+        assert result.spec.containers[0].image == 'busybox'
+
     @mock.patch('uuid.uuid4')
     def test_ensure_max_label_length(self, mock_uuid):
         mock_uuid.return_value = self.static_uuid
